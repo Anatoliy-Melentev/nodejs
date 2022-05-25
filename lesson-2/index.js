@@ -39,36 +39,40 @@ const declinationOfNumber = (number, name) => {
 };
 
 const createTimer = time => [
-    [getDate(time).getUTCFullYear() - 1970, ['год', 'года', 'лет']],
-    [getDate(time).getUTCMonth(), ['месяц', 'месяца', 'месяцев']],
-    [getDate(time).getUTCDate() - 1, ['день', 'дня', 'дней']],
-    [getDate(time).getUTCHours(), ['час', 'часа', 'часов']],
-    [getDate(time).getUTCMinutes(), ['минута', 'минуты', 'минут']],
-    [getDate(time).getUTCSeconds(), ['секунда', 'секунды', 'секунд']],
-  ].map(([value, name]) => declinationOfNumber(value, name)).join(' ');
+  ['getUTCFullYear', ['год', 'года', 'лет'], 1970],
+  ['getUTCMonth', ['месяц', 'месяца', 'месяцев']],
+  ['getUTCDate', ['день', 'дня', 'дней'], 1],
+  ['getUTCHours', ['час', 'часа', 'часов']],
+  ['getUTCMinutes', ['минута', 'минуты', 'минут']],
+  ['getUTCSeconds', ['секунда', 'секунды', 'секунд']],
+].map(([fn, name, reduce]) => declinationOfNumber(getDate(time)[fn]() - (reduce || 0), name)).join(' ');
 
 const setColor = (val, idx) => !((idx - 1) % 3) ? yellow(val) : (!((idx + 1) % 3) ? red(val) : green(val));
 
-const run = async () => {
-  const times = await delay(1000).then(() => timers.filter(date => date > new Date().getTime()));
-  const closeEvents = emitter.eventNames().filter(name => !+times.includes(+name.split('-')[0]));
+async function proccess() {
+  while (true) {
+    const times = await delay(1000).then(() => timers.filter(date => date > new Date().getTime()));
+    const closeEvents = emitter.eventNames().filter(name => !+times.includes(+name.split('-')[0]));
 
-  if (closeEvents.length) {
-    closeEvents.forEach(name => emitter.emit(name, blue(
-      `Таймер "${createTimerName(name.split('-')[0])}" завершил работу!`
-    )));
-    emitter.removeAllListeners(closeEvents);
-  }
+    if (closeEvents.length) {
+      closeEvents.forEach(name => emitter.emit(name, blue(
+        `Таймер "${createTimerName(name.split('-')[0])}" завершил работу!`
+      )));
+      emitter.removeAllListeners(closeEvents);
+    }
 
-  if (times.length) {
-    times.forEach((timer, idx) => emitter.emit(`${timer}-${idx}`, setColor(
-      `Таймеру "${createTimerName(timer)}" осталось работать: ${createTimer(timer - new Date().getTime())}`, idx)
-    ));
-
-    run();
+    if (times.length) {
+      times.forEach((timer, idx) => emitter.emit(`${timer}-${idx}`, setColor(
+        `Таймеру "${createTimerName(timer)}" осталось работать: ${createTimer(timer - new Date().getTime())}`, idx)
+      ));
+    } else {
+      break;
+    }
   }
 
   return false;
-};
-run();
+}
+
+proccess();
+
 
