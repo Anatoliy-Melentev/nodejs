@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Socket</title>
+  <script
+      src="https://cdn.socket.io/4.2.0/socket.io.min.js"
+      integrity="sha384-PiBR5S00EtOj2Lto9Uu81cmoyZqR57XcOna1oAuVuIEjzj0wpqDVfD0JA9eXlRsj"
+      crossorigin="anonymous"
+  ></script>
+</head>
+<body style="background: darkgray">
+<span>Всего юзеов: <outpat id="count">0</outpat></span>
+<input id="input" type="text" autofocus />
+<button id="button">Send</button>
+<div id="messages" style="padding-top: 10px"></div>
+<script>
+  const socket = io('localhost:3000');
+  const messageBlock = document.querySelector('#messages');
+  const button = document.querySelector('#button');
+  const input = document.querySelector('#input');
+  const countEl = document.querySelector('#count');
+  const createHTML = (text, color) => {
+    const div = document.createElement("div");
+    div.setAttribute('style', `color: ${color}; text-shadow: 2px 8px 6px rgba(0,0,0,0.2), 0px -5px 35px rgba(255,255,255,0.3);`);
+    div.innerHTML = text;
+
+    return div;
+  };
+
+  button.addEventListener('click', () => socket.emit('newMessage', { message: input.value }));
+
+  socket.on('connect', () => console.log('Connected to chat!'));
+
+  socket.on('newMessage', ({ name, color, message }) => {
+    input.value = '';
+    messageBlock.append(createHTML(`${name}: ${message}`, color));
+  });
+
+  socket.on('newConnect', ({ name, color, event, count }) => {
+    messageBlock.append(createHTML(`${name} ${event}`, color));
+    countEl.innerHTML = count;
+  });
+
+</script>
+</body>
+</html>
